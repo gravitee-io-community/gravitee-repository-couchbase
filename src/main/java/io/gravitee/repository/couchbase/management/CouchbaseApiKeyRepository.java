@@ -15,113 +15,67 @@
  */
 package io.gravitee.repository.couchbase.management;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import io.gravitee.repository.couchbase.management.internal.key.ApiKeyCouchbaseRepository;
+import io.gravitee.repository.couchbase.management.internal.model.ApiKeyCouchbase;
+import io.gravitee.repository.exceptions.TechnicalException;
+import io.gravitee.repository.management.api.ApiKeyRepository;
+import io.gravitee.repository.management.model.ApiKey;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import io.gravitee.repository.couchbase.management.internal.api.ApiCouchbaseRepository;
-import io.gravitee.repository.couchbase.management.internal.application.ApplicationCouchbaseRepository;
-import io.gravitee.repository.couchbase.management.internal.key.ApiKeyCouchbaseRepository;
-import io.gravitee.repository.couchbase.management.internal.model.ApiKeyCouchbase;
-import io.gravitee.repository.couchbase.management.mapper.GraviteeMapper;
-import io.gravitee.repository.exceptions.TechnicalException;
-import io.gravitee.repository.management.api.ApiKeyRepository;
-import io.gravitee.repository.management.model.ApiKey;
-
+/**
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 @Component
-public class CouchbaseApiKeyRepository implements ApiKeyRepository {
-	private final static Logger logger = LoggerFactory.getLogger(CouchbaseApiKeyRepository.class);
+public class CouchbaseApiKeyRepository extends CouchbaseAbstractRepository<ApiKey, ApiKeyCouchbase> implements ApiKeyRepository {
 
 	@Autowired
-	private GraviteeMapper mapper;
+	private ApiKeyCouchbaseRepository apiKeyCouchbaseRepository;
 
-	@Autowired
-	private ApiKeyCouchbaseRepository internalApiKeyRepo;
-	
-	@Autowired
-	private ApiCouchbaseRepository internalApiRepo;
-	
-	@Autowired
-	private ApplicationCouchbaseRepository internalApplicationRepo;
-
-	private Set<ApiKey> map(Collection<ApiKeyCouchbase> apiKeys){
-		if (apiKeys == null){
-			return Collections.emptySet();
-		}
-		
-		return apiKeys.stream().map(apiKeysCb -> mapper.map(apiKeysCb, ApiKey.class)).collect(Collectors.toSet());
+	public CouchbaseApiKeyRepository() {
+		super(ApiKey.class);
 	}
 
 	@Override
-	public Set<ApiKey> findByApplicationAndApi(String applicationId, String apiId) throws TechnicalException {
-		List<ApiKeyCouchbase> apiKeysCb = internalApiKeyRepo.findByApplicationAndApi(applicationId, apiId);
-		
-		return map(apiKeysCb);
+	public Optional<ApiKey> findById(String apiKey) throws TechnicalException {
+		ApiKeyCouchbase apiKeyCb = apiKeyCouchbaseRepository.findOne(apiKey);
+		return Optional.ofNullable(map(apiKeyCb));
 	}
 
 	@Override
-	public Set<ApiKey> findByApplication(String applicationId) throws TechnicalException {
-		List<ApiKeyCouchbase> apiKeysCb = internalApiKeyRepo.findByApplication(applicationId);
-		
-		return map(apiKeysCb);
-	}
+	public ApiKey create(ApiKey apiKey) throws TechnicalException {
+		ApiKeyCouchbase apiKeysCb = mapper.map(apiKey, ApiKeyCouchbase.class);
+		apiKeyCouchbaseRepository.save(apiKeysCb);
 
-
-	@Override
-	public ApiKey create(String applicationId, String apiId, ApiKey key) throws TechnicalException {
-		ApiKeyCouchbase apiKeysCb = mapper.map(key, ApiKeyCouchbase.class);
-		apiKeysCb.setId(internalApiKeyRepo.getIdForApiKey());
-		apiKeysCb.setApplication(internalApplicationRepo.findOne(applicationId).getId());
-		apiKeysCb.setApi(internalApiRepo.findOne(apiId).getId());
-		
-		internalApiKeyRepo.save(apiKeysCb);
-		
-		return key;
+		return apiKey;
 	}
 
 	@Override
-	public ApiKey update(ApiKey key) throws TechnicalException {
-		ApiKeyCouchbase apiKey = internalApiKeyRepo.findByKey(key.getKey());
-		apiKey.setCreatedAt(key.getCreatedAt());
-		apiKey.setExpiration(key.getExpiration());
-		apiKey.setRevoked(key.isRevoked());
-		apiKey.setRevokeAt(key.getRevokeAt());
+	public ApiKey update(ApiKey apiKey) throws TechnicalException {
+		ApiKeyCouchbase apiKeysCb = mapper.map(apiKey, ApiKeyCouchbase.class);
+		apiKeyCouchbaseRepository.save(apiKeysCb);
 
-		internalApiKeyRepo.save(apiKey);
-		
-		return key;
+		return apiKey;
 	}
 
 	@Override
-	public Optional<ApiKey> retrieve(String apiKey) throws TechnicalException {
-		ApiKeyCouchbase apiKeyCb = internalApiKeyRepo.findByKey(apiKey);
-
-		if(apiKeyCb != null) {
-			ApiKey retKey = mapper.map(apiKeyCb, ApiKey.class);
-			return Optional.of(retKey);
-		}
-		
-		return Optional.empty();
+	public Set<ApiKey> findBySubscription(String subscription) throws TechnicalException {
+		return apiKeyCouchbaseRepository.findBySubscription(subscription)
+				.stream()
+				.map(this::map)
+				.collect(Collectors.toSet());
 	}
 
 	@Override
-	public Set<ApiKey> findByApi(String apiId) {
-		Collection<ApiKeyCouchbase> apiKeysCb = internalApiKeyRepo.findByApi(apiId);
-		return map(apiKeysCb);
+	public Set<ApiKey> findByPlan(String plan) throws TechnicalException {
+		return apiKeyCouchbaseRepository.findByPlan(plan)
+				.stream()
+				.map(this::map)
+				.collect(Collectors.toSet());
 	}
-
-	@Override
-	public void delete(String apiKey) throws TechnicalException {
-		internalApiKeyRepo.delete(apiKey);
-	}
-	
-	
 }

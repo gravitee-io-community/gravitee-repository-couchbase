@@ -16,188 +16,72 @@
 package io.gravitee.repository.couchbase.management;
 
 import io.gravitee.repository.couchbase.management.internal.api.ApiCouchbaseRepository;
-import io.gravitee.repository.couchbase.management.internal.key.ApiKeyCouchbaseRepository;
 import io.gravitee.repository.couchbase.management.internal.model.ApiCouchbase;
-import io.gravitee.repository.couchbase.management.internal.model.MembershipCouchbase;
-import io.gravitee.repository.couchbase.management.internal.model.UserCouchbase;
-import io.gravitee.repository.couchbase.management.internal.user.UserCouchbaseRepository;
-import io.gravitee.repository.couchbase.management.mapper.GraviteeMapper;
 import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.repository.management.api.ApiRepository;
-import io.gravitee.repository.management.model.*;
-import org.dozer.util.IteratorUtils;
+import io.gravitee.repository.management.model.Api;
+import io.gravitee.repository.management.model.Visibility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
- * @author Gravitee.io Team
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
 @Component
-public class CouchbaseApiRepository implements ApiRepository {
+public class CouchbaseApiRepository extends CouchbaseAbstractRepository<Api, ApiCouchbase> implements ApiRepository {
 
 	@Autowired
-	private ApiKeyCouchbaseRepository internalApiKeyRepo;
-	
-	@Autowired
 	private ApiCouchbaseRepository internalApiRepo;
-	
-	@Autowired
-	private UserCouchbaseRepository internalUserRepo;
-	
-	@Autowired
-	private GraviteeMapper mapper;
-	
+
+	public CouchbaseApiRepository() {
+		super(Api.class);
+	}
+
 	@Override
 	public Optional<Api> findById(String apiId) throws TechnicalException {
-		ApiCouchbase api =  internalApiRepo.findOne(apiId);
-		return Optional.ofNullable(mapApi(api));
+		ApiCouchbase api = internalApiRepo.findOne(apiId);
+		return Optional.ofNullable(map(api));
 	}
 
 	@Override
 	public Set<Api> findAll() throws TechnicalException {
-		Iterable<ApiCouchbase> apis = internalApiRepo.findAll();
-		return mapApis(IteratorUtils.toList(apis.iterator()));
-	}
-	
-	@Override
-	public Api create(Api api) throws TechnicalException {
-		ApiCouchbase apiCb = mapApi(api);
-		ApiCouchbase apiCbCreated = internalApiRepo.save(apiCb);
-		return mapApi(apiCbCreated);
+		return map(internalApiRepo.findAll());
 	}
 
 	@Override
-	public Api update(Api api) throws TechnicalException {
-		ApiCouchbase apiCb = internalApiRepo.findOne(api.getId());
-
-		// Update, but don't change invariant other creation information
-		apiCb.setName(api.getName());
-		apiCb.setDescription(api.getDescription());
-		apiCb.setUpdatedAt(api.getUpdatedAt());
-		apiCb.setLifecycleState(api.getLifecycleState());
-		apiCb.setDefinition(api.getDefinition());
-		apiCb.setVisibility(api.getVisibility());
-		apiCb.setVersion(api.getVersion());
-		apiCb.setDeployedAt(api.getDeployedAt());
-		apiCb.setPicture(api.getPicture());
-		ApiCouchbase applicationCbUpdated = internalApiRepo.save(apiCb);
-		return mapApi(applicationCbUpdated);
-	}
-
-	@Override
-	public void delete(String apiId) throws TechnicalException {
-		//FIXME also delete apiKey ?
-		internalApiRepo.delete(apiId);
-	}
-
-	@Override
-	public Set<Api> findByMember(String username, MembershipType membershipType, Visibility visibility) throws TechnicalException {
-		return mapApis(internalApiRepo.findByMember(username, membershipType, visibility));
-	}
-
-	@Override
-	public void saveMember(String apiId, String username, MembershipType membershipType) throws TechnicalException {
-		ApiCouchbase api = internalApiRepo.findOne(apiId);
-		UserCouchbase user = internalUserRepo.findOne(username);
-
-		Membership membership = getMember(apiId, username);
-		if (membership == null) {
-			MembershipCouchbase member = new MembershipCouchbase();
-			member.setUser(user.getUsername());
-			member.setType(membershipType);
-			member.setCreatedAt(new Date());
-			member.setUpdatedAt(member.getCreatedAt());
-
-			api.getMembers().add(member);
-
-			internalApiRepo.save(api);
-		} else {
-			for (MembershipCouchbase member : api.getMembers()) {
-				if (member.getUser().equalsIgnoreCase(username)) {
-					member.setType(membershipType);
-					internalApiRepo.save(api);
-					break;
-				}
-			}
-		}
-	}
-
-	@Override
-	public void deleteMember(String apiId, String username) throws TechnicalException {
-		ApiCouchbase api = internalApiRepo.findOne(apiId);
-		MembershipCouchbase memberToDelete = null;
-
-		for (MembershipCouchbase member : api.getMembers()) {
-			if (member.getUser().equalsIgnoreCase(username)) {
-				memberToDelete = member;
-			}
-		}
-
-		if (memberToDelete != null) {
-			api.getMembers().remove(memberToDelete);
-			internalApiRepo.save(api);
-		}
-	}
-
-	@Override
-	public Membership getMember(String apiId, String username) throws TechnicalException {
-		Collection<Membership> members = getMembers(apiId, null);
-		for (Membership member : members) {
-			if (member.getUser().getUsername().equalsIgnoreCase(username)) {
-				return member;
-			}
-		}
-
+	public Set<Api> findByVisibility(Visibility visibility) throws TechnicalException {
 		return null;
 	}
 
 	@Override
-	public Collection<Membership> getMembers(String apiId, MembershipType membershipType) throws TechnicalException {
-		ApiCouchbase api = internalApiRepo.findOne(apiId);
-		List<MembershipCouchbase> membersCb = api.getMembers();
-		Set<Membership> members = new HashSet<>(membersCb.size());
-
-		for (MembershipCouchbase membership : membersCb) {
-			if (membershipType == null || (
-					membershipType != null && membership.getType().toString().equalsIgnoreCase(membershipType.toString()))) {
-				Membership member = new Membership();
-				member.setUser(mapUser(internalUserRepo.findOne(membership.getUser())));
-				member.setMembershipType(membership.getType());
-				member.setCreatedAt(membership.getCreatedAt());
-				member.setUpdatedAt(membership.getUpdatedAt());
-				members.add(member);
-			}
-		}
-
-		return members;
+	public Set<Api> findByIds(List<String> ids) throws TechnicalException {
+		Iterable<ApiCouchbase> apis = internalApiRepo.findAll(ids);
+		return map(apis);
 	}
 
-	private User mapUser(final UserCouchbase userCb) {
-		final User user = new User();
-		user.setUsername(userCb.getUsername());
-		user.setCreatedAt(userCb.getCreatedAt());
-		user.setEmail(userCb.getEmail());
-		user.setFirstname(userCb.getFirstname());
-		user.setLastname(userCb.getLastname());
-		user.setPassword(userCb.getPassword());
-		user.setUpdatedAt(userCb.getUpdatedAt());
-		user.setRoles( userCb.getRoles() != null ? new HashSet<>(userCb.getRoles()) : new HashSet<>());
-		return user;
+	@Override
+	public Api create(Api api) throws TechnicalException {
+		ApiCouchbase apiCb = mapper.map(api, ApiCouchbase.class);
+		internalApiRepo.save(apiCb);
+
+		return api;
 	}
 
-	private Set<Api> mapApis(Collection<ApiCouchbase> apis) {
-		return apis.stream().map(this::mapApi).collect(Collectors.toSet());
+	@Override
+	public Api update(Api api) throws TechnicalException {
+		ApiCouchbase apiCb = mapper.map(api, ApiCouchbase.class);
+		internalApiRepo.save(apiCb);
+
+		return api;
 	}
 
-	private ApiCouchbase mapApi(Api api){
-		return (api == null) ? null : mapper.map(api, ApiCouchbase.class);
-	}
-
-	private Api mapApi(ApiCouchbase api){
-		return (api == null) ? null : mapper.map(api, Api.class);
+	@Override
+	public void delete(String apiId) throws TechnicalException {
+		internalApiRepo.delete(apiId);
 	}
 }

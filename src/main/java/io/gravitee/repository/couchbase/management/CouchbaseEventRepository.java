@@ -15,44 +15,43 @@
  */
 package io.gravitee.repository.couchbase.management;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.gravitee.common.data.domain.Page;
+import io.gravitee.repository.couchbase.management.internal.event.EventCouchbaseRepository;
+import io.gravitee.repository.couchbase.management.internal.model.EventCouchbase;
+import io.gravitee.repository.exceptions.TechnicalException;
+import io.gravitee.repository.management.api.EventRepository;
+import io.gravitee.repository.management.api.search.EventCriteria;
+import io.gravitee.repository.management.api.search.Pageable;
+import io.gravitee.repository.management.model.Event;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import io.gravitee.repository.couchbase.management.internal.event.EventCouchbaseRepository;
-import io.gravitee.repository.couchbase.management.internal.model.EventCouchbase;
-import io.gravitee.repository.couchbase.management.mapper.GraviteeMapper;
-import io.gravitee.repository.exceptions.TechnicalException;
-import io.gravitee.repository.management.api.EventRepository;
-import io.gravitee.repository.management.model.Event;
-import io.gravitee.repository.management.model.EventType;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
+/**
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 @Component
-public class CouchbaseEventRepository implements EventRepository {
+public class CouchbaseEventRepository extends CouchbaseAbstractRepository<Event, EventCouchbase> implements EventRepository {
 
-    private Logger logger = LoggerFactory.getLogger(getClass());
     @Autowired
-	private GraviteeMapper mapper;
-    @Autowired
-    private EventCouchbaseRepository internalEventRepo;
+    private EventCouchbaseRepository eventCouchbaseRepository;
+
+    public CouchbaseEventRepository() {
+        super(Event.class);
+    }
 
     @Override
     public Optional<Event> findById(String id) throws TechnicalException {
         logger.debug("Find event by ID [{}]", id);
 
-        EventCouchbase event = internalEventRepo.findOne(id);
-        Event res = mapper.map(event, Event.class);
+        EventCouchbase event = eventCouchbaseRepository.findOne(id);
 
         logger.debug("Find event by ID [{}] - Done", id);
-        return Optional.ofNullable(res);
+        return Optional.ofNullable(map(event));
     }
 
     @Override
@@ -60,98 +59,48 @@ public class CouchbaseEventRepository implements EventRepository {
         logger.debug("Create event [{}]", event.getId());
 
         EventCouchbase eventCb = mapper.map(event, EventCouchbase.class);
-        if(StringUtils.isEmpty(eventCb.getId())){
-        	eventCb.setId(internalEventRepo.getIdForEvent());
-        }
-        EventCouchbase createdEventMongo = internalEventRepo.save(eventCb);
-
-        Event res = mapper.map(createdEventMongo, Event.class);
+        eventCouchbaseRepository.save(eventCb);
 
         logger.debug("Create event [{}] - Done", event.getId());
 
-        return res;
+        return event;
     }
 
     @Override
     public Event update(Event event) throws TechnicalException {
-        if (event == null || event.getId() == null) {
-            throw new IllegalStateException("Event to update must have an id");
-        }
+        EventCouchbase eventCb = mapper.map(event, EventCouchbase.class);
+        eventCouchbaseRepository.save(eventCb);
 
-        EventCouchbase eventCb = internalEventRepo.findOne(event.getId());
-        if (eventCb == null) {
-            throw new IllegalStateException(String.format("No event found with id [%s]", event.getId()));
-        }
-
-        try {
-        	eventCb.setProperties(event.getProperties());
-            eventCb.setType(event.getType());
-            eventCb.setPayload(event.getPayload());
-            eventCb.setParentId(event.getParentId());
-            eventCb.setUpdatedAt(event.getUpdatedAt());
-            EventCouchbase eventMongoUpdated = internalEventRepo.save(eventCb);
-            return mapper.map(eventMongoUpdated, Event.class);
-        } catch (Exception e) {
-            logger.error("An error occured when updating event", e);
-            throw new TechnicalException("An error occured when updating event");
-        }
+        return event;
     }
 
     @Override
     public void delete(String id) throws TechnicalException {
         try {
-            internalEventRepo.delete(id);
+            eventCouchbaseRepository.delete(id);
         } catch (Exception e) {
-            logger.error("An error occured when deleting event [{}]", id, e);
-            throw new TechnicalException("An error occured when deleting event");
+            logger.error("An error occurs when deleting event [{}]", id, e);
+            throw new TechnicalException("An error occurs when deleting event");
         }
     }
 
     @Override
-    public Set<Event> findByType(List<EventType> eventTypes) {
-        List<String> types = new ArrayList<String>();
-        for (EventType eventType : eventTypes) {
-            types.add(eventType.toString());
-        }
-        Collection<EventCouchbase> eventsCb = internalEventRepo.findByTypeIn(types);
-        return mapper.collection2set(eventsCb, EventCouchbase.class, Event.class);
+    public Page<Event> search(EventCriteria filter, Pageable pageable) {
+        Page<EventCouchbase> pagedEvents = eventCouchbaseRepository.search(filter, pageable);
+
+        return new Page<>(
+                pagedEvents.getContent().stream().map(this::map).collect(Collectors.toList()),
+                pagedEvents.getPageNumber(), (int) pagedEvents.getTotalElements(),
+                pagedEvents.getTotalElements());
     }
 
     @Override
-    public Set<Event> findByProperty(String key, String value) {
-        Collection<EventCouchbase> eventsCb = internalEventRepo.findByProperty(key, value);
+    public List<Event> search(EventCriteria filter) {
+        Page<EventCouchbase> pagedEvents = eventCouchbaseRepository.search(filter, null);
 
-        return mapper.collection2set(eventsCb, EventCouchbase.class, Event.class);
+        return pagedEvents.getContent()
+                .stream()
+                .map(this::map)
+                .collect(Collectors.toList());
     }
-
-//    private Set<Event> mapEvents(Collection<EventCouchbase> events) {
-//        return events.stream().map(this::mapEvent).collect(Collectors.toSet());
-//    }
-
-//    private EventCouchbase mapEvent(Event event) {
-//    	EventCouchbase eventMongo = new EventCouchbase();
-//        eventMongo.setId(event.getId());
-//        eventMongo.setType(event.getType().toString());
-//        eventMongo.setPayload(event.getPayload());
-//        eventMongo.setParentId(event.getParentId());
-//        eventMongo.setProperties(event.getProperties());
-//        eventMongo.setCreatedAt(event.getCreatedAt());
-//        eventMongo.setUpdatedAt(event.getUpdatedAt());
-//
-//        return eventMongo;
-//    }
-//
-//    private Event mapEvent(EventCouchbase eventMongo) {
-//        Event event = new Event();
-//        event.setId(eventMongo.getId());
-//        event.setType(EventType.valueOf(eventMongo.getType()));
-//        event.setPayload(eventMongo.getPayload());
-//        event.setParentId(eventMongo.getParentId());
-//        event.setProperties(eventMongo.getProperties());
-//        event.setCreatedAt(eventMongo.getCreatedAt());
-//        event.setUpdatedAt(eventMongo.getUpdatedAt());
-//
-//        return event;
-//    }
-
 }

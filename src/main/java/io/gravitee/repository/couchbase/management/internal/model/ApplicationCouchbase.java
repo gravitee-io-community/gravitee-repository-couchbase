@@ -15,17 +15,16 @@
  */
 package io.gravitee.repository.couchbase.management.internal.model;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-
-import org.springframework.data.annotation.Id;
+import com.couchbase.client.java.repository.annotation.Field;
+import com.couchbase.client.java.repository.annotation.Id;
 import org.springframework.data.couchbase.core.mapping.Document;
 
-import com.couchbase.client.java.repository.annotation.Field;
+import java.util.Objects;
 
 /**
  * @author Ludovic DUSSART (ludovic.dussart at gmail.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
 @Document
 public class ApplicationCouchbase extends Auditable {
@@ -35,12 +34,12 @@ public class ApplicationCouchbase extends Auditable {
 
     @Field
     private String name;
+
     @Field
     private String description;
+
     @Field
     private String type;
-    @Field
-    private List<MembershipCouchbase> members = new ArrayList<>();
 
     public String getId() {
         return id;
@@ -74,14 +73,6 @@ public class ApplicationCouchbase extends Auditable {
         this.type = type;
     }
 
-    public List<MembershipCouchbase> getMembers() {
-        return members;
-    }
-
-    public void setMembers(List<MembershipCouchbase> members) {
-        this.members = members;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -93,15 +84,5 @@ public class ApplicationCouchbase extends Auditable {
     @Override
     public int hashCode() {
         return Objects.hash(name);
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("Application{");
-        sb.append("id='").append(id).append('\'');
-        sb.append("name='").append(name).append('\'');
-        sb.append(", type='").append(type).append('\'');
-        sb.append('}');
-        return sb.toString();
     }
 }

@@ -15,45 +15,45 @@
  */
 package io.gravitee.repository.couchbase.management;
 
-import java.util.Optional;
-import java.util.Set;
-
-import org.dozer.util.IteratorUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import io.gravitee.repository.couchbase.management.internal.model.UserCouchbase;
 import io.gravitee.repository.couchbase.management.internal.user.UserCouchbaseRepository;
-import io.gravitee.repository.couchbase.management.mapper.GraviteeMapper;
 import io.gravitee.repository.exceptions.TechnicalException;
 import io.gravitee.repository.management.api.UserRepository;
 import io.gravitee.repository.management.model.User;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
 @Component
-public class CouchbaseUserRepository implements UserRepository {
-
-	private Logger logger = LoggerFactory.getLogger(getClass());
+public class CouchbaseUserRepository extends CouchbaseAbstractRepository<User, UserCouchbase> implements UserRepository {
 
 	@Autowired
 	private UserCouchbaseRepository internalUserRepo;
 
-	@Autowired
-	private GraviteeMapper mapper;
+	public CouchbaseUserRepository() {
+		super(User.class);
+	}
 
 	@Override
 	public Optional<User> findByUsername(String username) throws TechnicalException {
 		logger.debug("Find user by name user [{}]", username);
 
 		UserCouchbase user = internalUserRepo.findByUsername(username);
-		User res = mapper.map(user, User.class);
 
 		logger.debug("Find user by name user [{}] - Done", username);
-		return Optional.ofNullable(res);
+		return Optional.ofNullable(map(user));
+	}
+
+	@Override
+	public Set<User> findByUsernames(List<String> usernames) throws TechnicalException {
+		return null;
 	}
 
 	@Override
@@ -61,10 +61,7 @@ public class CouchbaseUserRepository implements UserRepository {
 		logger.debug("Find all users");
 		
 		Iterable<UserCouchbase> users = internalUserRepo.findAll();
-		Set<User> res = mapper.collection2set(IteratorUtils.toList(users.iterator()), UserCouchbase.class, User.class);
-
-		logger.debug("Find all users - Done");
-		return res;
+		return map(users);
 	}
 
 	@Override
@@ -72,24 +69,19 @@ public class CouchbaseUserRepository implements UserRepository {
 		logger.debug("Create user [{}]", user.getUsername());
 		
 		UserCouchbase userCouchbase = mapper.map(user, UserCouchbase.class);
-		UserCouchbase createdUserCb = internalUserRepo.save(userCouchbase);
-		
-		User res = mapper.map(createdUserCb, User.class);
+		internalUserRepo.save(userCouchbase);
 		
 		logger.debug("Create user [{}] - Done", user.getUsername());
 		
-		return res;
+		return user;
 	}
 
 	@Override
 	public User update(User user) throws TechnicalException {
 		UserCouchbase userCb = internalUserRepo.findOne(user.getUsername());
+		internalUserRepo.save(userCb);
 
-		// Update, but don't change invariant other creation information
-		userCb.setPicture(user.getPicture());
-
-		UserCouchbase userUpdated = internalUserRepo.save(userCb);
-		return mapper.map(userUpdated, User.class);
+		return user;
 	}
 
 }

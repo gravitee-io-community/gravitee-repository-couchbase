@@ -15,55 +15,95 @@
  */
 package io.gravitee.repository.couchbase.management.internal.event;
 
-import java.util.Collection;
-
+import com.couchbase.client.java.document.json.JsonArray;
+import com.couchbase.client.java.document.json.JsonObject;
+import com.couchbase.client.java.query.N1qlQuery;
+import com.couchbase.client.java.query.Statement;
+import com.couchbase.client.java.query.dsl.Expression;
+import com.couchbase.client.java.query.dsl.Sort;
+import com.couchbase.client.java.query.dsl.path.LimitPath;
+import com.couchbase.client.java.query.dsl.path.WherePath;
+import io.gravitee.common.data.domain.Page;
+import io.gravitee.repository.couchbase.management.internal.model.EventCouchbase;
+import io.gravitee.repository.management.api.search.EventCriteria;
+import io.gravitee.repository.management.api.search.Pageable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.couchbase.core.CouchbaseTemplate;
 import org.springframework.data.couchbase.repository.query.support.N1qlUtils;
 
-import com.couchbase.client.java.Bucket;
-import com.couchbase.client.java.document.JsonLongDocument;
-import com.couchbase.client.java.document.json.JsonObject;
-import com.couchbase.client.java.error.DocumentDoesNotExistException;
-import com.couchbase.client.java.query.N1qlQuery;
-import com.couchbase.client.java.query.dsl.Expression;
-import com.couchbase.client.java.query.dsl.path.WherePath;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
-import io.gravitee.repository.couchbase.management.internal.model.EventCouchbase;
+import static com.couchbase.client.java.query.dsl.Expression.x;
 
+/**
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 public class EventCouchbaseRepositoryImpl implements EventCouchbaseRepositoryCustom {
+
 	private final static Logger logger = LoggerFactory.getLogger(EventCouchbaseRepositoryImpl.class);
+
 	private final static String EVENT_ID_PATTERN = "event::%d";
 	private final static String EVENT_COUNTER_ID = "event_counter";
 	private final static String CLASS_FIELD_VALUE = EventCouchbase.class.getName();
 	private final static String CLASS_FIELD = "_class";
-	
+
 	private final static String PROPERTIES_PREFIX_FIELD= "properties.";
-    @Autowired
-    private CouchbaseTemplate cbTemplate;
-    
-    @Override
-    public Collection<EventCouchbase> findByProperty(String key, String value) {
-    	JsonObject parameters = JsonObject.create().put("value", value);
-		WherePath baseStatement = N1qlUtils.createSelectFromForEntity(cbTemplate.getCouchbaseBucket().name());
-		//workaroung because spring-data not include _class criteria in his build query
-		Expression baseExpression = Expression.x(CLASS_FIELD).eq(Expression.x("$class"));
-		parameters.put("class", CLASS_FIELD_VALUE);
-		Expression propertyExpression = Expression.x(PROPERTIES_PREFIX_FIELD + key).eq(Expression.x("$value"));;
-		
-		N1qlQuery query = N1qlQuery.parameterized(baseStatement.where(baseExpression.and(propertyExpression)), parameters);
-		return cbTemplate.findByN1QL(query, EventCouchbase.class);
-    }
+
+	@Autowired
+	private CouchbaseTemplate cbTemplate;
 
 	@Override
-	public String getIdForEvent() {
-		Bucket bucket = cbTemplate.getCouchbaseBucket();
+	public Page<EventCouchbase> search(EventCriteria filter, Pageable pageable) {
+		JsonObject parameters = JsonObject.create().put("class", CLASS_FIELD_VALUE);
+		Statement finalStmt;
 
-		JsonLongDocument counterDoc = bucket.counter(EVENT_COUNTER_ID, 1, 1);
-		Long counter = counterDoc.content();
+		WherePath baseStatement = N1qlUtils.createSelectFromForEntity(cbTemplate.getCouchbaseBucket().name());
+		Expression baseExpression = x(CLASS_FIELD).eq(x("$class"));
 
-		return String.format(EVENT_ID_PATTERN, counter);
+		if (filter.getTypes() != null && ! filter.getTypes().isEmpty()) {
+			if (filter.getTypes().size() == 1) {
+				baseExpression = baseExpression.and(x("type").eq('\'' + filter.getTypes().iterator().next().name() + '\''));
+			} else {
+				JsonArray values = JsonArray.create();
+				filter.getTypes().forEach(type -> values.add(type.name()));
+				baseExpression = baseExpression.and(Expression.x("type").in(values));
+			}
+		}
+
+		if (filter.getProperties() != null) {
+			for(Map.Entry<String, Object> property : filter.getProperties().entrySet()) {
+				if (property.getValue() instanceof Collection) {
+					Collection col = (Collection) (property.getValue());
+					JsonArray values = JsonArray.create();
+					col.forEach(values::add);
+					baseExpression = baseExpression.and(Expression.x(PROPERTIES_PREFIX_FIELD + property.getKey()).in(values));
+				} else {
+					baseExpression = baseExpression.and(x(PROPERTIES_PREFIX_FIELD + property.getKey()).eq('\'' + (String) property.getValue() + '\''));
+				}
+			}
+		}
+
+		LimitPath queryStmt = baseStatement
+				.where(baseExpression)
+				.orderBy(Sort.desc(x("updatedAt")));
+		finalStmt = queryStmt;
+
+		if (pageable != null) {
+			finalStmt = queryStmt.limit(pageable.pageSize()).offset(pageable.pageNumber() * pageable.pageSize());
+		}
+
+		N1qlQuery query = N1qlQuery.parameterized(finalStmt, parameters);
+		List<EventCouchbase> events = cbTemplate.findByN1QL(query, EventCouchbase.class);
+
+		return new Page(
+				events,
+				(pageable != null) ? pageable.pageNumber() : 0,
+				(pageable != null) ? pageable.pageSize() : 0,
+				events.size());
 	}
 }

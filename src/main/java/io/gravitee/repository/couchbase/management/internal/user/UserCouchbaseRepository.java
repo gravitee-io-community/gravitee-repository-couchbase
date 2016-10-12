@@ -15,11 +15,14 @@
  */
 package io.gravitee.repository.couchbase.management.internal.user;
 
+import io.gravitee.repository.couchbase.management.internal.model.UserCouchbase;
 import org.springframework.data.couchbase.core.query.Query;
 import org.springframework.data.couchbase.repository.CouchbaseRepository;
 
-import io.gravitee.repository.couchbase.management.internal.model.UserCouchbase;
-
+/**
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 public interface UserCouchbaseRepository extends CouchbaseRepository<UserCouchbase, String> {
 
 	UserCouchbase findByUsername(String username);
@@ -27,8 +30,8 @@ public interface UserCouchbaseRepository extends CouchbaseRepository<UserCouchba
 	UserCouchbase findByEmail(String email);
 
 	@Override
-	  @Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter}")
-	  Iterable<UserCouchbase> findAll();
+	@Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter}")
+	Iterable<UserCouchbase> findAll();
 }
 
 

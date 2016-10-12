@@ -20,26 +20,30 @@ import java.util.Date;
 import com.couchbase.client.java.repository.annotation.Field;
 
 /**
- * @author David BRASSELY (brasseld at gmail.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
 abstract class Auditable {
-	@Field
-    private Date  createdAt;
-	@Field
-    private Date  updatedAt;
-	public Date getCreatedAt() {
-		return createdAt;
-	}
-	public void setCreatedAt(Date createdAt) {
-		this.createdAt = createdAt;
-	}
-	public Date getUpdatedAt() {
-		return updatedAt;
-	}
-	public void setUpdatedAt(Date updatedAt) {
-		this.updatedAt = updatedAt;
-	}
-	
 
-   
+    @Field
+    private Date createdAt;
+
+    @Field
+    private Date updatedAt;
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Date getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Date updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

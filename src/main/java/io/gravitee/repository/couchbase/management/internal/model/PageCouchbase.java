@@ -15,32 +15,41 @@
  */
 package io.gravitee.repository.couchbase.management.internal.model;
 
-import org.springframework.data.annotation.Id;
 import org.springframework.data.couchbase.core.mapping.Document;
 
+import com.couchbase.client.java.repository.annotation.Id;
 import com.couchbase.client.java.repository.annotation.Field;
 
 import io.gravitee.repository.management.model.PageType;
 
-
-
+/**
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 @Document
 public class PageCouchbase extends Auditable {
 
 	@Id
 	private String id;
+
 	@Field
 	private String name;
+
 	@Field
 	private PageType type;
+
 	@Field
 	private String content;
+
 	@Field
 	private String lastContributor;
+
 	@Field
 	private int order;
+
 	@Field
 	private String api;
+
 	@Field
 	private boolean published;
 

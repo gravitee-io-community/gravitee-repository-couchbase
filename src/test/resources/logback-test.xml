@@ -11,7 +11,7 @@
 	</logger>
 
 	<logger name="io.gravitee.repository" level="DEBUG" />
-	<logger name="com.couchbase" level="DEBUG" />
+	<logger name="com.couchbase" level="TRACE" />
 	<logger name="org.springframework" level="INFO" />
 
 	<!-- Strictly speaking, the level attribute is not necessary since -->

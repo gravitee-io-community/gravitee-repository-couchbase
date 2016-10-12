@@ -15,31 +15,38 @@
  */
 package io.gravitee.repository.couchbase.management.internal.model;
 
+import com.couchbase.client.java.repository.annotation.Field;
+import com.couchbase.client.java.repository.annotation.Id;
+import org.springframework.data.couchbase.core.mapping.Document;
+
 import java.util.List;
 import java.util.Objects;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.couchbase.core.mapping.Document;
-
-import com.couchbase.client.java.repository.annotation.Field;
-
-
+/**
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 @Document
 public class UserCouchbase extends Auditable {
 
     @Id
-    @Field
     private String username;
+
     @Field
     private String email;
+
     @Field
     private String password;
+
     @Field
     private String firstname;
+
     @Field
     private String lastname;
+
     @Field
     private List<String> roles;
+
     @Field
     private String picture;
 

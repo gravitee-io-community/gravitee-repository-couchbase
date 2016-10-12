@@ -15,17 +15,18 @@
  */
 package io.gravitee.repository.couchbase.management.internal.page;
 
-import java.util.List;
-
+import io.gravitee.repository.couchbase.management.internal.model.PageCouchbase;
 import org.springframework.data.couchbase.repository.CouchbaseRepository;
 
-import io.gravitee.repository.couchbase.management.internal.model.PageCouchbase;
-public interface PageCouchbaseRepository extends CouchbaseRepository<PageCouchbase, String>, PageCouchbaseRepositoryCustom {
+import java.util.List;
+
+/**
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
+ */
+public interface PageCouchbaseRepository extends CouchbaseRepository<PageCouchbase, String> {
 
 	List<PageCouchbase> findByApi(String apiName);
-	List<PageCouchbase> findByApiAndPublishedTrue(String apiName);
-
-	List<PageCouchbase> findIsPublishedByApi(String apiName);
 
 	List<PageCouchbase> findByApiOrderByOrderDesc(String apiId);
 }

@@ -13,24 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.repository.couchbase.management.mapper;
+package io.gravitee.repository.couchbase.management.internal.view;
 
-import org.dozer.DozerBeanMapper;
-import org.dozer.MappingException;
+import io.gravitee.repository.couchbase.management.internal.model.ViewCouchbase;
+import org.springframework.data.couchbase.repository.CouchbaseRepository;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
-public class GraviteeDozerMapper extends DozerBeanMapper implements GraviteeMapper {
+public interface ViewCouchbaseRepository extends CouchbaseRepository<ViewCouchbase, String>, ViewCouchbaseRepositoryCustom {
 
-	public GraviteeDozerMapper(){
-		super.addMapping(getClass().getResourceAsStream("/dozer.xml"));
-	}
-	
-	public  <T> T map(Object source, Class<T> destinationClass) throws MappingException{
-		if(source == null) 
-			return null;
-		return super.map(source, destinationClass);
-	}
 }

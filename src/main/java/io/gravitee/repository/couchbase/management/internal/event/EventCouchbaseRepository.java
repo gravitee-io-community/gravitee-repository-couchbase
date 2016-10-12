@@ -15,12 +15,13 @@
  */
 package io.gravitee.repository.couchbase.management.internal.event;
 
-import java.util.Collection;
-
+import io.gravitee.repository.couchbase.management.internal.model.EventCouchbase;
 import org.springframework.data.couchbase.repository.CouchbaseRepository;
 
-import io.gravitee.repository.couchbase.management.internal.model.EventCouchbase;
-
+/**
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 public interface EventCouchbaseRepository extends CouchbaseRepository<EventCouchbase, String>, EventCouchbaseRepositoryCustom {
-	 public Collection<EventCouchbase> findByTypeIn(Collection<String> types);
+
 }

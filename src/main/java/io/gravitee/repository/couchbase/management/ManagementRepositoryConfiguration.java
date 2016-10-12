@@ -23,8 +23,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.couchbase.repository.config.EnableCouchbaseRepositories;
 
 @Configuration
-@ComponentScan
-@EnableCouchbaseRepositories(basePackages={"io.gravitee.repository.couchbase.management.internal"})
+@ComponentScan("io.gravitee.repository.couchbase.management")
+@EnableCouchbaseRepositories("io.gravitee.repository.couchbase.management.internal")
 @Profile("!test")
 public class ManagementRepositoryConfiguration extends AbstractRepositoryConfiguration {
 

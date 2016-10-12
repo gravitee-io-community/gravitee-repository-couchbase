@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.repository.couchbase.management.internal.page;
+package io.gravitee.repository.couchbase.management.internal.subscription;
+
+import io.gravitee.repository.couchbase.management.internal.model.SubscriptionCouchbase;
+import org.springframework.data.repository.CrudRepository;
 
 /**
- * 
- * @author Ludovic DUSSART (ludovic dot dussart dot pro at gmail dot com)
- *
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
-public interface PageCouchbaseRepositoryCustom {
+public interface SubscriptionCouchbaseRepository extends CrudRepository<SubscriptionCouchbase, String> {
 }

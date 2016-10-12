@@ -21,6 +21,8 @@ import io.gravitee.repository.couchbase.management.ManagementRepositoryConfigura
 
 /**
  * @author Ludovic DUSSART (ludovic.dussart.pro at gmail.com)
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
 public class CouchbaseRepository implements Repository {
 

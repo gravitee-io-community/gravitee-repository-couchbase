@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.gravitee.repository.couchbase.management.internal.page;
+package io.gravitee.repository.couchbase.management.internal.view;
+
+import io.gravitee.repository.couchbase.management.internal.model.ViewCouchbase;
 
 /**
- * 
- * @author Ludovic DUSSART (ludovic dot dussart dot pro at gmail dot com)
- *
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
-public class PageCouchbaseRepositoryImpl implements PageCouchbaseRepositoryCustom {
+public interface ViewCouchbaseRepositoryCustom {
 
+//	@Override
+//	@Query("#{#n1ql.selectEntity} WHERE #{#n1ql.filter}")
+	Iterable<ViewCouchbase> getAll();
 }

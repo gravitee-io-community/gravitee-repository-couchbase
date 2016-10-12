@@ -101,6 +101,7 @@ public class CouchbaseEnvironmentFactory {
         	builder.sslKeystoreFile(sslKeystoreFile);
         if(StringUtils.isNotBlank(sslKeystorePassword))
         	builder.sslKeystorePassword(sslKeystorePassword);
+
         if(queryEnabled != null)
         	builder.queryEnabled(queryEnabled);
         if(queryPort != null)
@@ -156,6 +157,7 @@ public class CouchbaseEnvironmentFactory {
         if(responseBufferSize != null)
         	builder.responseBufferSize(responseBufferSize);
 
+        builder.queryEndpoints(5);
         builder.queryEnabled(true);
         return builder;
     }

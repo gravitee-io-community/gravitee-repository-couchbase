@@ -20,8 +20,6 @@ import io.gravitee.repository.Scope;
 import io.gravitee.repository.couchbase.management.mapper.GraviteeDozerMapper;
 import io.gravitee.repository.couchbase.management.mapper.GraviteeMapper;
 import io.gravitee.repository.couchbase.management.transaction.NoTransactionManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.Bean;
@@ -45,8 +43,6 @@ import java.util.Set;
  * @author Ludovic DUSSART (ludovic dot dussart dot pro at gmail dot com)
  */
 public abstract class AbstractRepositoryConfiguration extends AbstractCouchbaseConfiguration {
-
-    private final Logger LOGGER = LoggerFactory.getLogger(AbstractRepositoryConfiguration.class);
 
     @Autowired
     private Environment environment;
@@ -119,6 +115,6 @@ public abstract class AbstractRepositoryConfiguration extends AbstractCouchbaseC
      * Always return up-to-date datas
      */
     protected Consistency getDefaultConsistency() {
-        return Consistency.STRONGLY_CONSISTENT;
+        return Consistency.DEFAULT_CONSISTENCY;
     }
 }

@@ -17,17 +17,19 @@ package io.gravitee.repository.couchbase.management.internal.model;
 
 import java.util.Map;
 
-import org.springframework.data.annotation.Id;
+import com.couchbase.client.java.repository.annotation.Field;
+import com.couchbase.client.java.repository.annotation.Id;
 import org.springframework.data.couchbase.core.mapping.Document;
 
 import io.gravitee.repository.management.model.EventType;
 
-
 /**
  * @author Ludovic DUSSART
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
 @Document
-public class EventCouchbase extends Auditable{
+public class EventCouchbase extends Auditable {
 
     /**
      * The event ID
@@ -38,24 +40,26 @@ public class EventCouchbase extends Auditable{
     /**
      * The event Type
      */
+    @Field
     private EventType type;
 
     /**
      * The event payload
      */
+    @Field
     private String payload;
 
     /**
      * The event parent
      */
+    @Field
     private String parentId;
 
     /**
      * The event properties
      */
+    @Field
     private Map<String, String> properties;
-
-    
 
     public String getId() {
         return id;

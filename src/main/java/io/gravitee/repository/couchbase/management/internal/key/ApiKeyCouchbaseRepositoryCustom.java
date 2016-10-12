@@ -15,6 +15,17 @@
  */
 package io.gravitee.repository.couchbase.management.internal.key;
 
+import io.gravitee.repository.couchbase.management.internal.model.ApiKeyCouchbase;
+
+import java.util.List;
+
+/**
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 public interface ApiKeyCouchbaseRepositoryCustom {
-	String getIdForApiKey();
+
+    List<ApiKeyCouchbase> findBySubscription(String subscription);
+
+    List<ApiKeyCouchbase> findByPlan(String plan);
 }

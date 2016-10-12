@@ -15,50 +15,70 @@
  */
 package io.gravitee.repository.couchbase.management.internal.model;
 
-import java.util.Date;
-import java.util.Objects;
-
+import com.couchbase.client.java.repository.annotation.Field;
+import com.couchbase.client.java.repository.annotation.Id;
 import org.springframework.data.couchbase.core.mapping.Document;
 
-import com.couchbase.client.java.repository.annotation.Id;
+import java.util.Date;
 
 /**
- * @author Ludovic DUSSART
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
  */
 @Document
 public class ApiKeyCouchbase {
+
 	@Id
-	private String id;
-	/**
-	 * The API for which the key is defined.
-	 */
-	private String api;
-
-
-	/**
-	 * The application for which the key is defined.
-	 */
-	private String application;
-	
-	/**
-	 * Api Key
-	 */
 	private String key;
 
 	/**
-	 * Is the key revoked ?
+	 * The subscription for which the Api Key is generated
 	 */
-	private boolean revoked;
-	
+	@Field
+	private String subscription;
+
 	/**
-	 * Token expiration date
+	 * The application used to make the subscription
 	 */
-	private Date expiration;
+	@Field
+	private String application;
 
-	private Date  createdAt;
+	/**
+	 * The subscribed plan
+	 */
+	@Field
+	private String plan;
 
-	private Date  revokeAt;
-	
+	/**
+	 * Expiration date (end date) of the Api Key
+	 */
+	@Field
+	private Date expireAt;
+
+	/**
+	 * API key creation date
+	 */
+	@Field
+	private Date createdAt;
+
+	/**
+	 * API key updated date
+	 */
+	@Field
+	private Date updatedAt;
+
+	/**
+	 * Flag to indicate if the Api Key is revoked ?
+	 */
+	@Field
+	private boolean revoked;
+
+	/**
+	 * If the key is revoked, the revocation date
+	 */
+	@Field
+	private Date revokedAt;
+
 	public String getKey() {
 		return key;
 	}
@@ -67,29 +87,12 @@ public class ApiKeyCouchbase {
 		this.key = key;
 	}
 
-	public Date getExpiration() {
-		return expiration;
+	public String getSubscription() {
+		return subscription;
 	}
 
-	public void setExpiration(Date expiration) {
-		this.expiration = expiration;
-	}
-	
-	public boolean isRevoked() {
-		return revoked;
-	}
-
-	public void setRevoked(boolean revoked) {
-		this.revoked = revoked;
-	}
-
-	
-	public String getApi() {
-		return api;
-	}
-
-	public void setApi(String api) {
-		this.api = api;
+	public void setSubscription(String subscription) {
+		this.subscription = subscription;
 	}
 
 	public String getApplication() {
@@ -99,49 +102,67 @@ public class ApiKeyCouchbase {
 	public void setApplication(String application) {
 		this.application = application;
 	}
-	@Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ApiKeyCouchbase key = (ApiKeyCouchbase) o;
-        return Objects.equals(this.key, key.key);
-    }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(key);
-    }
+	public String getPlan() {
+		return plan;
+	}
 
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("ApiKey{");
-        sb.append("name='").append(key).append('\'');
-        sb.append(", expiration=").append(expiration );
-        sb.append('}');
-        return sb.toString();
-    }
+	public void setPlan(String plan) {
+		this.plan = plan;
+	}
 
-	public Date  getCreatedAt() {
+	public Date getExpireAt() {
+		return expireAt;
+	}
+
+	public void setExpireAt(Date expireAt) {
+		this.expireAt = expireAt;
+	}
+
+	public Date getCreatedAt() {
 		return createdAt;
 	}
 
-	public void setCreatedAt(Date  createdAt) {
+	public void setCreatedAt(Date createdAt) {
 		this.createdAt = createdAt;
 	}
 
-	public Date  getRevokeAt() {
-		return revokeAt;
+	public Date getUpdatedAt() {
+		return updatedAt;
 	}
 
-	public void setRevokeAt(Date  revokeAt) {
-		this.revokeAt = revokeAt;
+	public void setUpdatedAt(Date updatedAt) {
+		this.updatedAt = updatedAt;
 	}
 
-	public String getId() {
-		return id;
+	public boolean isRevoked() {
+		return revoked;
 	}
 
-	public void setId(String id) {
-		this.id = id;
+	public void setRevoked(boolean revoked) {
+		this.revoked = revoked;
+	}
+
+	public Date getRevokedAt() {
+		return revokedAt;
+	}
+
+	public void setRevokedAt(Date revokedAt) {
+		this.revokedAt = revokedAt;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+
+		ApiKeyCouchbase that = (ApiKeyCouchbase) o;
+
+		return key.equals(that.key);
+	}
+
+	@Override
+	public int hashCode() {
+		return key.hashCode();
 	}
 }

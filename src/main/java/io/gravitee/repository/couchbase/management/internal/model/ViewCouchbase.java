@@ -15,32 +15,25 @@
  */
 package io.gravitee.repository.couchbase.management.internal.model;
 
+import com.couchbase.client.java.repository.annotation.Field;
 import com.couchbase.client.java.repository.annotation.Id;
 import org.springframework.data.couchbase.core.mapping.Document;
-
-import java.util.Date;
 
 /**
  * @author David BRASSELY (david.brassely at graviteesource.com)
  * @author GraviteeSource Team
  */
 @Document
-public class MembershipCouchbase extends Auditable {
+public class ViewCouchbase {
 
     @Id
     private String id;
 
-    private String userId;
+    @Field
+    private String name;
 
-    private String referenceType;
-
-    private String referenceId;
-
-    private String type;
-
-    private Date createdAt;
-
-    private Date updatedAt;
+    @Field
+    private String description;
 
     public String getId() {
         return id;
@@ -50,56 +43,20 @@ public class MembershipCouchbase extends Auditable {
         this.id = id;
     }
 
-    public String getUserId() {
-        return userId;
+    public String getName() {
+        return name;
     }
 
-    public void setUserId(String userId) {
-        this.userId = userId;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getReferenceType() {
-        return referenceType;
+    public String getDescription() {
+        return description;
     }
 
-    public void setReferenceType(String referenceType) {
-        this.referenceType = referenceType;
-    }
-
-    public String getReferenceId() {
-        return referenceId;
-    }
-
-    public void setReferenceId(String referenceId) {
-        this.referenceId = referenceId;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    @Override
-    public Date getCreatedAt() {
-        return createdAt;
-    }
-
-    @Override
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    @Override
-    public Date getUpdatedAt() {
-        return updatedAt;
-    }
-
-    @Override
-    public void setUpdatedAt(Date updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     @Override
@@ -107,10 +64,9 @@ public class MembershipCouchbase extends Auditable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        MembershipCouchbase that = (MembershipCouchbase) o;
+        ViewCouchbase that = (ViewCouchbase) o;
 
         return id.equals(that.id);
-
     }
 
     @Override

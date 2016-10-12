@@ -21,9 +21,13 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.couchbase.repository.config.EnableCouchbaseRepositories;
 
+/**
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 @Configuration
 @ComponentScan("io.gravitee.repository.couchbase.management")
-@EnableCouchbaseRepositories(basePackages={"io.gravitee.repository.couchbase.management.internal"})
+@EnableCouchbaseRepositories("io.gravitee.repository.couchbase.management.internal")
 public class CouchbaseTestRepositoryConfiguration extends AbstractRepositoryConfiguration {
 
 	@Override

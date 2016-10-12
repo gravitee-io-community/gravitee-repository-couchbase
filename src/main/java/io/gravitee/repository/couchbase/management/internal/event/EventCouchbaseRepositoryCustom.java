@@ -15,15 +15,16 @@
  */
 package io.gravitee.repository.couchbase.management.internal.event;
 
-import java.util.Collection;
-
+import io.gravitee.common.data.domain.Page;
 import io.gravitee.repository.couchbase.management.internal.model.EventCouchbase;
+import io.gravitee.repository.management.api.search.EventCriteria;
+import io.gravitee.repository.management.api.search.Pageable;
 
+/**
+ * @author David BRASSELY (david.brassely at graviteesource.com)
+ * @author GraviteeSource Team
+ */
 public interface EventCouchbaseRepositoryCustom {
 
-    //Collection<EventCouchbase> findByType(Collection<String> types);
-
-    Collection<EventCouchbase> findByProperty(String key, String value);
-
-	String getIdForEvent();
+    Page<EventCouchbase> search(EventCriteria filter, Pageable pageable);
 }
